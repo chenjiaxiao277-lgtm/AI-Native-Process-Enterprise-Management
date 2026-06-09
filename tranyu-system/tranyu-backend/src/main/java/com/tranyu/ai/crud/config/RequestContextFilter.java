@@ -31,6 +31,7 @@ public class RequestContextFilter extends OncePerRequestFilter {
     private static final String HEADER_USER_ID = "X-User-Id";
     private static final String HEADER_USERNAME = "X-Username";
     private static final String DEFAULT_TENANT_CODE = "TRANYU_DEFAULT";
+    private static final String MASTER_SPACE_CODE = "MASTER";
 
     private final JdbcTemplate jdbcTemplate;
     private volatile Long cachedDefaultTenantId;
@@ -46,7 +47,9 @@ public class RequestContextFilter extends OncePerRequestFilter {
             if (!initTenantContext(request, response)) {
                 return;
             }
-            initSpaceContext(request);
+            if (!initSpaceContext(request, response)) {
+                return;
+            }
             initAuthSubjectContext(request);
             filterChain.doFilter(request, response);
         } finally {
@@ -84,11 +87,47 @@ public class RequestContextFilter extends OncePerRequestFilter {
         return true;
     }
 
-    private void initSpaceContext(HttpServletRequest request) {
-        String spaceId = normalize(request.getHeader(HEADER_SPACE_ID));
-        if (spaceId != null) {
-            SpaceContext.set(spaceId);
+    private boolean initSpaceContext(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String tenantIdText = TenantContext.get();
+        if (tenantIdText == null || tenantIdText.isBlank()) {
+            return true;
         }
+        Long tenantId = parseTenantId(tenantIdText);
+        if (tenantId == null) {
+            writeFailure(response, ErrorCode.PARAM_ERROR.getCode(), "当前租户上下文无效", HttpServletResponse.SC_BAD_REQUEST);
+            return false;
+        }
+
+        String spaceIdHeader = normalize(request.getHeader(HEADER_SPACE_ID));
+        if (spaceIdHeader != null) {
+            Long spaceId = parseTenantId(spaceIdHeader);
+            if (spaceId == null) {
+                writeFailure(response, ErrorCode.PARAM_ERROR.getCode(), "X-Space-Id无效", HttpServletResponse.SC_BAD_REQUEST);
+                return false;
+            }
+            SpaceRecord space = resolveSpaceByTenantAndId(tenantId, spaceId);
+            if (space == null) {
+                SpaceRecord existsInOtherTenant = resolveSpaceById(spaceId);
+                if (existsInOtherTenant != null) {
+                    writeFailure(response, ErrorCode.FORBIDDEN.getCode(), "当前空间不属于当前租户", HttpServletResponse.SC_FORBIDDEN);
+                } else {
+                    writeFailure(response, ErrorCode.DATA_NOT_FOUND.getCode(), "当前空间不存在", HttpServletResponse.SC_NOT_FOUND);
+                }
+                return false;
+            }
+            if (!space.enabled()) {
+                writeFailure(response, ErrorCode.FORBIDDEN.getCode(), "当前空间已停用", HttpServletResponse.SC_FORBIDDEN);
+                return false;
+            }
+            SpaceContext.set(String.valueOf(space.id()));
+            return true;
+        }
+
+        SpaceRecord masterSpace = resolveMasterSpace(tenantId);
+        if (masterSpace != null && masterSpace.enabled()) {
+            SpaceContext.set(String.valueOf(masterSpace.id()));
+        }
+        return true;
     }
 
     private void initAuthSubjectContext(HttpServletRequest request) {
@@ -150,6 +189,69 @@ public class RequestContextFilter extends OncePerRequestFilter {
         }
     }
 
+    private SpaceRecord resolveMasterSpace(Long tenantId) {
+        try {
+            return jdbcTemplate.query(
+                    """
+                    SELECT id, tenant_id, status
+                    FROM tr_space
+                    WHERE tenant_id = ?
+                      AND space_code = ?
+                      AND deleted_flag = 0
+                    ORDER BY id
+                    LIMIT 1
+                    """,
+                    ps -> {
+                        ps.setLong(1, tenantId);
+                        ps.setString(2, MASTER_SPACE_CODE);
+                    },
+                    rs -> rs.next() ? new SpaceRecord(rs.getLong("id"), rs.getLong("tenant_id"), rs.getString("status")) : null
+            );
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private SpaceRecord resolveSpaceByTenantAndId(Long tenantId, Long spaceId) {
+        try {
+            return jdbcTemplate.query(
+                    """
+                    SELECT id, tenant_id, status
+                    FROM tr_space
+                    WHERE tenant_id = ?
+                      AND id = ?
+                      AND deleted_flag = 0
+                    LIMIT 1
+                    """,
+                    ps -> {
+                        ps.setLong(1, tenantId);
+                        ps.setLong(2, spaceId);
+                    },
+                    rs -> rs.next() ? new SpaceRecord(rs.getLong("id"), rs.getLong("tenant_id"), rs.getString("status")) : null
+            );
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private SpaceRecord resolveSpaceById(Long spaceId) {
+        try {
+            return jdbcTemplate.query(
+                    """
+                    SELECT id, tenant_id, status
+                    FROM tr_space
+                    WHERE id = ?
+                      AND deleted_flag = 0
+                    LIMIT 1
+                    """,
+                    ps -> ps.setLong(1, spaceId),
+                    rs -> rs.next() ? new SpaceRecord(rs.getLong("id"), rs.getLong("tenant_id"), rs.getString("status")) : null
+            );
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
     private Long parseTenantId(String tenantId) {
         try {
             return Long.valueOf(tenantId);
@@ -178,6 +280,12 @@ public class RequestContextFilter extends OncePerRequestFilter {
     }
 
     private record TenantRecord(Long id, String status) {
+        private boolean enabled() {
+            return "ENABLED".equalsIgnoreCase(status);
+        }
+    }
+
+    private record SpaceRecord(Long id, Long tenantId, String status) {
         private boolean enabled() {
             return "ENABLED".equalsIgnoreCase(status);
         }

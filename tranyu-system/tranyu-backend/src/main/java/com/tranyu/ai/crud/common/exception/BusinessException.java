@@ -1,7 +1,8 @@
-package com.tranyu.exception;
+package com.tranyu.ai.crud.common.exception;
 
-import com.tranyu.common.ErrorCode;
-
+/**
+ * 平台统一业务异常。
+ */
 public class BusinessException extends RuntimeException {
     private final int code;
 

@@ -5,11 +5,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-@MapperScan("com.tranyu.mapper")
+@MapperScan({"com.tranyu.mapper", "com.tranyu.ai.crud.mapper"})
 public class TranyuApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(TranyuApplication.class, args);
     }
 }
-

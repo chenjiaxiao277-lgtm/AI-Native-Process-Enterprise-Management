@@ -1,7 +1,6 @@
-package com.tranyu.exception;
+package com.tranyu.ai.crud.common.exception;
 
-import com.tranyu.common.ErrorCode;
-import com.tranyu.common.Result;
+import com.tranyu.ai.crud.common.result.Result;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
@@ -12,6 +11,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+/**
+ * 平台统一异常处理器。
+ */
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -69,7 +71,7 @@ public class GlobalExceptionHandler {
                     .matcher(detail);
             if (matcher.find()) {
                 extra = matcher.group(1) + " / " + matcher.group(2);
-                }
+            }
         }
         return Result.fail(
                 ErrorCode.BAD_REQUEST.getCode(),

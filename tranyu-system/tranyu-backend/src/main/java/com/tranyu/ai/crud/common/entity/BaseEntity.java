@@ -1,4 +1,4 @@
-package com.tranyu.common;
+package com.tranyu.ai.crud.common.entity;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;
@@ -10,6 +10,9 @@ import lombok.Data;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
+/**
+ * 平台通用实体基类。
+ */
 @Data
 public class BaseEntity implements Serializable {
     @TableId(type = IdType.AUTO)

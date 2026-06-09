@@ -1,4 +1,4 @@
-package com.tranyu.exception;
+package com.tranyu.ai.crud.common.exception;
 
 /**
  * 统一权限拒绝异常。

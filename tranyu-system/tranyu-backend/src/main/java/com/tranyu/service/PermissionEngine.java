@@ -1,7 +1,7 @@
 package com.tranyu.service;
 
 import com.tranyu.entity.PermissionPolicy;
-import com.tranyu.exception.PermissionDeniedException;
+import com.tranyu.ai.crud.common.exception.PermissionDeniedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

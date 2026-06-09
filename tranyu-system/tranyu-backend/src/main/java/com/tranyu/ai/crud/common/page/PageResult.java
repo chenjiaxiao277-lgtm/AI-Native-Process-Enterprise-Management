@@ -1,4 +1,4 @@
-package com.tranyu.common;
+package com.tranyu.ai.crud.common.page;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,6 +7,9 @@ import lombok.NoArgsConstructor;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * 平台统一分页结果。
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

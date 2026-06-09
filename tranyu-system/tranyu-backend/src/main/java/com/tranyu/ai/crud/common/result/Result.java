@@ -1,11 +1,15 @@
-package com.tranyu.common;
+package com.tranyu.ai.crud.common.result;
 
+import com.tranyu.ai.crud.common.exception.ErrorCode;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+/**
+ * 平台统一返回结构。
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

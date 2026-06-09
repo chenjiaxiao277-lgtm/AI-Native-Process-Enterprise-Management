@@ -33,6 +33,7 @@ public class LoginInterceptor implements HandlerInterceptor {
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final String HEADER_TENANT = "X-Tenant-Id";
     private static final String HEADER_SPACE = "X-Space-Id";
+    private static final String SYSTEM_API_PREFIX = "/api/system/";
 
     private final JwtConfig jwtConfig;
 
@@ -45,6 +46,9 @@ public class LoginInterceptor implements HandlerInterceptor {
             return true;
         }
         if (uri.equals("/api/login")) {
+            return true;
+        }
+        if (uri.startsWith(SYSTEM_API_PREFIX) && TenantContext.get() != null) {
             return true;
         }
 
@@ -73,8 +77,10 @@ public class LoginInterceptor implements HandlerInterceptor {
         String spaceId = normalizeHeader(request.getHeader(HEADER_SPACE));
         String username = claims.get("username", String.class);
 
-        TenantContext.setCurrentTenantId(tenantId == null ? TenantContext.DEFAULT_TENANT_ID : tenantId);
-        SpaceContext.setCurrentSpaceId(spaceId);
+        TenantContext.setCurrentTenantId(tenantId == null ? TenantContext.getCurrentTenantIdOrDefault() : tenantId);
+        if (spaceId != null) {
+            SpaceContext.setCurrentSpaceId(spaceId);
+        }
         AuthSubjectContext.set(new AuthSubjectContext.AuthSubject(userId, username, token));
 
         return true;

@@ -1,6 +1,6 @@
 package com.tranyu.controller;
 
-import com.tranyu.common.Result;
+import com.tranyu.ai.crud.common.result.Result;
 import com.tranyu.service.GenericCrudService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;
@@ -82,4 +82,3 @@ public class GenericCrudController {
         response.flushBuffer();
     }
 }
-

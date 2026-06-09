@@ -1,6 +1,6 @@
 package com.tranyu.controller;
 
-import com.tranyu.common.Result;
+import com.tranyu.ai.crud.common.result.Result;
 import com.tranyu.entity.SysDept;
 import com.tranyu.service.SysDeptService;
 import lombok.RequiredArgsConstructor;
@@ -59,4 +59,3 @@ public class SysDeptController {
         return Result.ok(null);
     }
 }
-

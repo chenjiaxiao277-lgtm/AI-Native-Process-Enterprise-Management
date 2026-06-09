@@ -1,7 +1,7 @@
 package com.tranyu.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.tranyu.common.Result;
+import com.tranyu.ai.crud.common.result.Result;
 import com.tranyu.entity.SysRole;
 import com.tranyu.entity.SysUser;
 import com.tranyu.service.SysRoleService;
@@ -78,4 +78,3 @@ public class SysRoleController {
         return Result.ok(roleService.listUsersByRole(id));
     }
 }
-

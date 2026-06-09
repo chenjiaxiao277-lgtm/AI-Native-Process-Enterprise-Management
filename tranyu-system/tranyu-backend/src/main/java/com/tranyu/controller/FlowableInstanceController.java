@@ -1,6 +1,6 @@
 package com.tranyu.controller;
 
-import com.tranyu.common.Result;
+import com.tranyu.ai.crud.common.result.Result;
 import com.tranyu.config.JwtConfig;
 import com.tranyu.flowable.FlowableInstanceService;
 import org.springframework.web.bind.annotation.*;

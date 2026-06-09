@@ -1,6 +1,6 @@
 package com.tranyu.controller;
 
-import com.tranyu.common.Result;
+import com.tranyu.ai.crud.common.result.Result;
 import com.tranyu.dto.WorkflowConfigDTO;
 import com.tranyu.entity.WorkflowConfig;
 import com.tranyu.entity.WorkflowInstance;

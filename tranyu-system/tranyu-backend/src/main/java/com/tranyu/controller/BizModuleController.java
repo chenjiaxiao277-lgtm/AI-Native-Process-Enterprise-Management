@@ -1,7 +1,7 @@
 package com.tranyu.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.tranyu.common.Result;
+import com.tranyu.ai.crud.common.result.Result;
 import com.tranyu.entity.BizField;
 import com.tranyu.entity.BizModule;
 import com.tranyu.service.BizFieldService;
@@ -143,4 +143,3 @@ public class BizModuleController {
         private List<BizField> fields;
     }
 }
-

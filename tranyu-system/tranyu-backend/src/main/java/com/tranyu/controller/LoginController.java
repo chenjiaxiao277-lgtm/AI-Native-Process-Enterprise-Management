@@ -1,6 +1,6 @@
 package com.tranyu.controller;
 
-import com.tranyu.common.Result;
+import com.tranyu.ai.crud.common.result.Result;
 import com.tranyu.service.LoginService;
 import com.tranyu.service.LoginService.CurrentUserInfo;
 import com.tranyu.service.LoginService.LoginResult;
@@ -63,4 +63,3 @@ public class LoginController {
         private Boolean rememberMe;
     }
 }
-

@@ -1,6 +1,6 @@
 package com.tranyu.controller;
 
-import com.tranyu.common.Result;
+import com.tranyu.ai.crud.common.result.Result;
 import com.tranyu.context.AuthSubjectContext;
 import com.tranyu.context.TenantContext;
 import com.tranyu.dto.SpaceDTOs;

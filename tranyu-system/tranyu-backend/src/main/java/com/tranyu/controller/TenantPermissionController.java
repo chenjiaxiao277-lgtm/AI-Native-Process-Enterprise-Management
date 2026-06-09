@@ -1,6 +1,6 @@
 package com.tranyu.controller;
 
-import com.tranyu.common.Result;
+import com.tranyu.ai.crud.common.result.Result;
 import com.tranyu.dto.TenantDTOs;
 import com.tranyu.entity.TenantConfig;
 import com.tranyu.entity.TenantFeatureToggle;

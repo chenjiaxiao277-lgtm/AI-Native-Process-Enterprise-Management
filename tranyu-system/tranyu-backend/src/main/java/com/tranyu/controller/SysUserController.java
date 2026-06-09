@@ -1,7 +1,7 @@
 package com.tranyu.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.tranyu.common.Result;
+import com.tranyu.ai.crud.common.result.Result;
 import com.tranyu.entity.SysUser;
 import com.tranyu.service.SysUserService;
 import lombok.Data;
@@ -99,4 +99,3 @@ public class SysUserController {
         }
     }
 }
-

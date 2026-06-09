@@ -1,7 +1,7 @@
 package com.tranyu.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.tranyu.common.Result;
+import com.tranyu.ai.crud.common.result.Result;
 import com.tranyu.context.SpaceContext;
 import com.tranyu.context.TenantContext;
 import com.tranyu.entity.WorkItemField;

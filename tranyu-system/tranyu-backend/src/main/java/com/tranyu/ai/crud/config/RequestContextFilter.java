@@ -1,17 +1,23 @@
 package com.tranyu.ai.crud.config;
 
-import com.tranyu.context.AuthSubjectContext;
-import com.tranyu.context.SpaceContext;
-import com.tranyu.context.TenantContext;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tranyu.ai.crud.common.context.AuthSubjectContext;
+import com.tranyu.ai.crud.common.context.SpaceContext;
+import com.tranyu.ai.crud.common.context.TenantContext;
+import com.tranyu.ai.crud.common.exception.ErrorCode;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * 请求上下文过滤器：从请求头初始化租户、空间、用户主体上下文。
@@ -19,6 +25,7 @@ import java.io.IOException;
 @Component("platformRequestContextFilter")
 public class RequestContextFilter extends OncePerRequestFilter {
 
+    private static final ObjectMapper JSON = new ObjectMapper();
     private static final String HEADER_TENANT_ID = "X-Tenant-Id";
     private static final String HEADER_SPACE_ID = "X-Space-Id";
     private static final String HEADER_USER_ID = "X-User-Id";
@@ -36,7 +43,9 @@ public class RequestContextFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         try {
-            initTenantContext(request);
+            if (!initTenantContext(request, response)) {
+                return;
+            }
             initSpaceContext(request);
             initAuthSubjectContext(request);
             filterChain.doFilter(request, response);
@@ -47,15 +56,32 @@ public class RequestContextFilter extends OncePerRequestFilter {
         }
     }
 
-    private void initTenantContext(HttpServletRequest request) {
-        String tenantId = normalize(request.getHeader(HEADER_TENANT_ID));
-        if (tenantId == null) {
-            Long defaultTenantId = resolveDefaultTenantId();
-            tenantId = defaultTenantId == null ? null : String.valueOf(defaultTenantId);
+    private boolean initTenantContext(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String tenantIdHeader = normalize(request.getHeader(HEADER_TENANT_ID));
+        if (tenantIdHeader != null) {
+            Long tenantId = parseTenantId(tenantIdHeader);
+            if (tenantId == null) {
+                writeFailure(response, ErrorCode.PARAM_ERROR.getCode(), "X-Tenant-Id无效", HttpServletResponse.SC_BAD_REQUEST);
+                return false;
+            }
+            TenantRecord tenant = resolveTenantById(tenantId);
+            if (tenant == null) {
+                writeFailure(response, ErrorCode.DATA_NOT_FOUND.getCode(), "当前租户不存在", HttpServletResponse.SC_NOT_FOUND);
+                return false;
+            }
+            if (!tenant.enabled()) {
+                writeFailure(response, ErrorCode.FORBIDDEN.getCode(), "当前租户已停用", HttpServletResponse.SC_FORBIDDEN);
+                return false;
+            }
+            TenantContext.set(String.valueOf(tenant.id()));
+            return true;
         }
-        if (tenantId != null) {
-            TenantContext.set(tenantId);
+
+        TenantRecord defaultTenant = resolveDefaultTenant();
+        if (defaultTenant != null && defaultTenant.enabled()) {
+            TenantContext.set(String.valueOf(defaultTenant.id()));
         }
+        return true;
     }
 
     private void initSpaceContext(HttpServletRequest request) {
@@ -82,14 +108,14 @@ public class RequestContextFilter extends OncePerRequestFilter {
         AuthSubjectContext.set(new AuthSubjectContext.AuthSubject(userId, username, null));
     }
 
-    private Long resolveDefaultTenantId() {
+    private TenantRecord resolveDefaultTenant() {
         if (cachedDefaultTenantId != null) {
-            return cachedDefaultTenantId;
+            return resolveTenantById(cachedDefaultTenantId);
         }
         try {
-            Long tenantId = jdbcTemplate.query(
+            TenantRecord tenant = jdbcTemplate.query(
                     """
-                    SELECT id
+                    SELECT id, status
                     FROM tr_tenant
                     WHERE tenant_code = ?
                       AND deleted_flag = 0
@@ -97,13 +123,51 @@ public class RequestContextFilter extends OncePerRequestFilter {
                     LIMIT 1
                     """,
                     ps -> ps.setString(1, DEFAULT_TENANT_CODE),
-                    rs -> rs.next() ? rs.getLong("id") : null
+                    rs -> rs.next() ? new TenantRecord(rs.getLong("id"), rs.getString("status")) : null
             );
-            cachedDefaultTenantId = tenantId;
-            return tenantId;
+            cachedDefaultTenantId = tenant == null ? null : tenant.id();
+            return tenant;
         } catch (Exception ignored) {
             return null;
         }
+    }
+
+    private TenantRecord resolveTenantById(Long tenantId) {
+        try {
+            return jdbcTemplate.query(
+                    """
+                    SELECT id, status
+                    FROM tr_tenant
+                    WHERE id = ?
+                      AND deleted_flag = 0
+                    LIMIT 1
+                    """,
+                    ps -> ps.setLong(1, tenantId),
+                    rs -> rs.next() ? new TenantRecord(rs.getLong("id"), rs.getString("status")) : null
+            );
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private Long parseTenantId(String tenantId) {
+        try {
+            return Long.valueOf(tenantId);
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
+    }
+
+    private void writeFailure(HttpServletResponse response, int code, String message, int httpStatus) throws IOException {
+        response.setStatus(httpStatus);
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("code", code);
+        body.put("message", message);
+        body.put("data", null);
+        body.put("success", false);
+        response.getWriter().write(JSON.writeValueAsString(body));
     }
 
     private String normalize(String value) {
@@ -111,5 +175,11 @@ public class RequestContextFilter extends OncePerRequestFilter {
             return null;
         }
         return value.trim();
+    }
+
+    private record TenantRecord(Long id, String status) {
+        private boolean enabled() {
+            return "ENABLED".equalsIgnoreCase(status);
+        }
     }
 }

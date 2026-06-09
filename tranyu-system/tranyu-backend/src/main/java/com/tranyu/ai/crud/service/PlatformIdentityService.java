@@ -10,9 +10,9 @@ import com.tranyu.ai.crud.model.entity.PlatformRoleEntity;
 import com.tranyu.ai.crud.model.entity.PlatformUserEntity;
 import com.tranyu.ai.crud.common.page.PageQuery;
 import com.tranyu.ai.crud.common.page.PageResult;
-import com.tranyu.context.AuthSubjectContext;
-import com.tranyu.context.SpaceContext;
-import com.tranyu.context.TenantContext;
+import com.tranyu.ai.crud.common.context.AuthSubjectContext;
+import com.tranyu.ai.crud.common.context.SpaceContext;
+import com.tranyu.ai.crud.common.context.TenantContext;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

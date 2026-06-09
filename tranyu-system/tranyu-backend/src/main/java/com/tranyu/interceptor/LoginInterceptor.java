@@ -34,6 +34,7 @@ public class LoginInterceptor implements HandlerInterceptor {
     private static final String HEADER_TENANT = "X-Tenant-Id";
     private static final String HEADER_SPACE = "X-Space-Id";
     private static final String SYSTEM_API_PREFIX = "/api/system/";
+    private static final String PLATFORM_API_PREFIX = "/api/platform/";
 
     private final JwtConfig jwtConfig;
 
@@ -48,7 +49,8 @@ public class LoginInterceptor implements HandlerInterceptor {
         if (uri.equals("/api/login")) {
             return true;
         }
-        if (uri.startsWith(SYSTEM_API_PREFIX) && TenantContext.get() != null) {
+        if ((uri.startsWith(SYSTEM_API_PREFIX) || uri.startsWith(PLATFORM_API_PREFIX))
+                && TenantContext.get() != null) {
             return true;
         }
 

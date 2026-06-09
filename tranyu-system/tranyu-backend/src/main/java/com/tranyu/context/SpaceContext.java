@@ -10,16 +10,23 @@ public final class SpaceContext {
     private SpaceContext() {
     }
 
-    public static void setCurrentSpaceId(String spaceId) {
+    public static void set(String spaceId) {
         HOLDER.set(spaceId);
     }
 
-    public static String getCurrentSpaceId() {
+    public static String get() {
         return HOLDER.get();
+    }
+
+    public static void setCurrentSpaceId(String spaceId) {
+        set(spaceId);
+    }
+
+    public static String getCurrentSpaceId() {
+        return get();
     }
 
     public static void clear() {
         HOLDER.remove();
     }
 }
-

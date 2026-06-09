@@ -12,12 +12,20 @@ public final class TenantContext {
     private TenantContext() {
     }
 
-    public static void setCurrentTenantId(String tenantId) {
+    public static void set(String tenantId) {
         HOLDER.set(tenantId);
     }
 
-    public static String getCurrentTenantId() {
+    public static String get() {
         return HOLDER.get();
+    }
+
+    public static void setCurrentTenantId(String tenantId) {
+        set(tenantId);
+    }
+
+    public static String getCurrentTenantId() {
+        return get();
     }
 
     public static String getCurrentTenantIdOrDefault() {
@@ -29,4 +37,3 @@ public final class TenantContext {
         HOLDER.remove();
     }
 }
-

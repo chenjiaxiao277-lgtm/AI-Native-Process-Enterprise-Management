@@ -1,0 +1,33 @@
+{
+  "name": "tranyu-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "umi dev",
+    "build": "umi build",
+    "preview": "umi preview",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "test": "umi test"
+  },
+  "dependencies": {
+    "@ant-design/icons": "^5",
+    "@ant-design/pro-components": "^2",
+    "@ant-design/pro-layout": "^7",
+    "antd": "^5",
+    "echarts": "^6.0.0",
+    "quill": "^1.3.7",
+    "react": "^18",
+    "react-dom": "^18",
+    "react-quill": "^2.0.0",
+    "umi": "^4"
+  },
+  "devDependencies": {
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "@umijs/lint": "^4",
+    "eslint": "^8.57.0",
+    "prettier": "^3",
+    "typescript": "^5"
+  }
+}

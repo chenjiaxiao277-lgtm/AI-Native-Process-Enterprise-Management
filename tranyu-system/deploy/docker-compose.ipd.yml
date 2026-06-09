@@ -1,0 +1,47 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: ipd-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change-me}
+      MYSQL_DATABASE: ltc_db
+      TZ: Asia/Shanghai
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_general_ci
+    ports:
+      - "13306:3306"
+    volumes:
+      - ipd_mysql_data:/var/lib/mysql
+
+  backend:
+    build:
+      context: ../tranyu-backend
+      dockerfile: Dockerfile
+    container_name: ipd-backend
+    restart: always
+    depends_on:
+      - mysql
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ltc_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=utf8
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-change-me}
+      TZ: Asia/Shanghai
+    ports:
+      - "18080:8080"
+
+  frontend:
+    build:
+      context: ../tranyu-frontend
+      dockerfile: Dockerfile
+    container_name: ipd-frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "18002:80"
+
+volumes:
+  ipd_mysql_data:

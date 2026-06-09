@@ -1,0 +1,18 @@
+---
+description: Tranyu 多租户/空间隔离、PermissionEngine、Flowable 边界、SQL 与泳道语义
+alwaysApply: true
+---
+
+# Tranyu 平台架构（默认适用）
+
+实现或评审本仓库代码时请遵守：
+
+1. **租户/空间**：业务数据带 `tenant_id`；空间级资源带 `space_id`。查询必须按租户 + 空间（适用时）过滤，禁止跨空间默认可见。禁止无 `tenant_id`/`space_id`（适用时）的业务 SQL。
+
+2. **Flowable**：仅作执行引擎；不负责权限与租户/空间隔离。调用 Flowable 前必须完成业务鉴权。**Controller 不得直接调用 Flowable Service**。
+
+3. **权限**：经统一 **PermissionEngine**；**deny 优先于 allow**；**未命中默认拒绝**。
+
+4. **泳道/流程建模**：**仅 `nextIds`（及显式连线）表示真实流程关系**；UI 横纵布局不表示顺序；**并行节点不自动建边**。
+
+详细说明与自检清单：`.cursor/skills/tranyu-platform-architecture/SKILL.md`。

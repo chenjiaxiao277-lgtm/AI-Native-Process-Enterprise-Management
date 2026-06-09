@@ -1,0 +1,4 @@
+interface:
+  display_name: "Context Rollover Refresh"
+  short_description: "Refresh and append structured background context"
+  default_prompt: "Use $context-rollover-refresh when AI context nears limit or when a new background begins; append operation log, plan, reasoning, risks, and next steps into project background and start with a sync summary."

@@ -1,33 +1,51 @@
 services:
-  mysql:
-    image: mysql:8.0
-    container_name: ipd-mysql
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: tranyu-postgres
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change-me}
-      MYSQL_DATABASE: ltc_db
+      POSTGRES_DB: tranyu_platform
+      POSTGRES_USER: tranyu
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
       TZ: Asia/Shanghai
-    command:
-      - --default-authentication-plugin=mysql_native_password
-      - --character-set-server=utf8mb4
-      - --collation-server=utf8mb4_general_ci
     ports:
-      - "13306:3306"
+      - "15432:5432"
     volumes:
-      - ipd_mysql_data:/var/lib/mysql
+      - tranyu_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tranyu -d tranyu_platform"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7.2
+    container_name: tranyu-redis
+    restart: always
+    ports:
+      - "16379:6379"
+    volumes:
+      - tranyu_redis_data:/data
+    command: ["redis-server", "--appendonly", "yes"]
 
   backend:
     build:
       context: ../tranyu-backend
       dockerfile: Dockerfile
-    container_name: ipd-backend
+    container_name: tranyu-backend
     restart: always
     depends_on:
-      - mysql
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ltc_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=utf8
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-change-me}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/tranyu_platform
+      SPRING_DATASOURCE_USERNAME: tranyu
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-dev}
       TZ: Asia/Shanghai
     ports:
       - "18080:8080"
@@ -36,7 +54,7 @@ services:
     build:
       context: ../tranyu-frontend
       dockerfile: Dockerfile
-    container_name: ipd-frontend
+    container_name: tranyu-frontend
     restart: always
     depends_on:
       - backend
@@ -44,4 +62,5 @@ services:
       - "18002:80"
 
 volumes:
-  ipd_mysql_data:
+  tranyu_postgres_data:
+  tranyu_redis_data:
